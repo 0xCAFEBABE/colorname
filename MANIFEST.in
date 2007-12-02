@@ -1,0 +1,3 @@
+recursive-include colorname-colors colorname-*.txt
+include INSTALL.txt
+include LICENSE.txt
