@@ -1,9 +1,9 @@
 [options]
 name = X11 Colors
-copyright = X.Org Foundation
+author = X.Org Foundation
 license = X11 License
 source = http://www.x.org/wiki/Releases/7.2
-source = /usr/share/X11/rgb.txt
+source-file = /usr/share/X11/rgb.txt
 active = 0
 
 [colors]

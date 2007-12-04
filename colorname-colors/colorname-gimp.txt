@@ -1,9 +1,9 @@
 [options]
 name = GIMP Colors
-copyright = The GIMP Team
+author = The GIMP Team
 license = GPL
 source = http://www.gimp.org/
-source = gimp-2.2.17/data/palettes/*.gpl
+source-file = gimp-2.2.17/data/palettes/*.gpl
 active = 1
 
 [colors]
