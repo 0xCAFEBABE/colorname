@@ -1,5 +1,5 @@
 [options]
-name = Websafe/SVG colors
+name = Websafe colors
 author = W3C
 license = GPL
 source = http://www.w3.org/TR/css3-color/#svg-color
