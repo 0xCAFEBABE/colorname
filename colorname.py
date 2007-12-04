@@ -11,7 +11,7 @@ __doc__ = __blurb__ + "\n" \
 		"selected color and all predefined colors, " \
 		"either in the RGB or HSV color space."
 
-__version__ = "0.2rc1"
+__version__ = "0.2rc2"
 __date__ = "8th August 2007"
 __website__ = "http://code.foosel.org/colorname"
 
