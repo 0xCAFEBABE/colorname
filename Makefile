@@ -10,11 +10,11 @@ SCP=scp
 
 all: release
 
-release:
+dist:
 	rm -r dist
 	./setup.py sdist
 
-upload: release
+release: dist
 	$(NIKNOCK)
 	$(SCP) $(TARBALL) $(USER)@$(HOST):$(TARGET)
 	python2.5 setup.py sdist upload --sign

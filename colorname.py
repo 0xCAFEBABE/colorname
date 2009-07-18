@@ -56,27 +56,13 @@ except ImportError:
 	def url_show(*args):
 		print >>sys.stderr, "gnome bindings not found, can't open URL."
 
-# start in gimp or in stand-alone mode?
-try:
-	import gimp
-	import gimpfu
-	from gimpplugin import plugin as GimpPlugin
-except ImportError, e:
-	if not "-gimp" in sys.argv:
-		# standalone
-		gimp = False
-		# mock GimpPlugin
-		GimpPlugin = object
-	else:
-		print >>sys.stderr, "Aborting. Error loading gimp python modules: %s" % e
-		sys.exit(-1)
-
-
 ## config
 
-location = "<Toolbox>/Xtns/_Colorname"
 colorDefPattern = "colorname-*.txt"
 colorDefDir = "colorname-colors"
+windowSize = (350, 600)
+
+
 
 class ColorVector(tuple):
 	def __sub__(self, v):
@@ -96,12 +82,6 @@ builtinColors = (False, "Builtin colors",
 	}
 )
 
-windowSizes = {
-	"gimp": (350, 350),
-	"standalone": (350, 600)
-}
-
-
 ## the code that does the actual work
 
 def hypot(a, b):
@@ -114,30 +94,6 @@ def distance(a, b):
 
 	return reduce(hypot, a-b)
 
-## ApiWrapper template
-
-class ApiWrapper:
-	def getColor(self):
-		pass
-	
-	def setColor(self):
-		pass
-
-class GimpWrapper(ApiWrapper):
-	def getColor(self):
-		return ColorVector(gimp.get_foreground())
-	
-	def setColor(self, r, g, b):
-		gimp.set_foreground(r, g, b)
-
-class StandaloneWrapper(ApiWrapper):
-	def getColor(self):
-		color = self.colorSelect.get_current_color()
-		return ColorVector((color.red / 256, color.green / 256, color.blue / 256))
-	
-	def setColor(self, r, g, b):
-		colorDef = "#%02x%02x%02x" % (r, g, b)
-		self.colorSelect.set_current_color(gtk.gdk.color_parse(colorDef))
 
 ## GUI code
 
@@ -147,7 +103,7 @@ class GUI:
 	def execute(self, widget=False):
 		"""execute button event handler"""
 		
-		foregroundColor = wrapper.getColor()
+		foregroundColor = self.getColor()
 		self.resultModel.clear()
 
 		# calculate distances and add them to the resultModel
@@ -220,14 +176,17 @@ class GUI:
 		"""RGB/HSV combobox handler"""
 		
 		## FIXME: might work or not depending on the libgtk version
-		#num = widget.get_active()
+		# FIXME
+		num = widget.get_active()
+		print "XXX", num, "|", widget.get_model()
 		#self.__activeColorSystem = widget.get_model()[num][0]
 		
+		
 		## workaround
-		if self.__activeColorSystem == self.__colorSystems[0]:
-			self.__activeColorSystem = self.__colorSystems[1]
-		else:
-			self.__activeColorSystem = self.__colorSystems[0]	
+		#if self.__activeColorSystem == self.__colorSystems[0]:
+		#	self.__activeColorSystem = self.__colorSystems[1]
+		#else:
+		#	self.__activeColorSystem = self.__colorSystems[0]	
 		
 	def __colorlistCheckboxHandler(self, cell, path, model):
 		model[path][0] = not model[path][0]
@@ -304,11 +263,19 @@ class GUI:
 		subPixBuf.fill(model.get_value(iter, 3))
 		cell.set_property("pixbuf", pixBuf)
 
+	def getColor(self):
+		color = self.colorSelect.get_current_color()
+		return ColorVector((color.red / 256, color.green / 256, color.blue / 256))
+	
+	def setColor(self, r, g, b):
+		colorDef = "#%02x%02x%02x" % (r, g, b)
+		self.colorSelect.set_current_color(gtk.gdk.color_parse(colorDef))
+
 	##
 
 	def __init__(self):
 		# color systems
-		self.__colorSystems = ["RGB", "HSV"]
+		self.__colorSystems = ["RGB", "HSV", "YIQ"]
 		self.__activeColorSystem = self.__colorSystems[0]
 		
 		## main window
@@ -317,10 +284,7 @@ class GUI:
 		self.window = gtk.Window()
 		self.window.set_position(gtk.WIN_POS_CENTER_ON_PARENT)
 		
-		if gimp:
-			self.window.set_default_size(*windowSizes["gimp"])
-		else:
-			self.window.set_default_size(*windowSizes["standalone"])
+		self.window.set_default_size(*windowSize)
 		
 		self.window.set_title("colorname")
 
@@ -332,12 +296,11 @@ class GUI:
 		
 		mainBox = gtk.VBox(spacing=spacing)
 		self.window.add(mainBox)
-
-		## standalone
 		
-		if not gimp:
-			wrapper.colorSelect = gtk.ColorSelection()
-			mainBox.pack_start(wrapper.colorSelect, expand=False)
+		## misc
+		
+		self.colorSelect = gtk.ColorSelection()
+		mainBox.pack_start(self.colorSelect, expand=False)
 		
 		listsBox = gtk.VPaned()
 		listsBox.set_position(150)
@@ -550,43 +513,6 @@ def loadColors(model, files=None, loadDefault=False):
 			# Note: OptionParser sucks
 			print >>sys.stderr, "Parsing error in file '%s' | %s" % (f, e)
 
-## gimp plugin class
-
-class Colorname(GimpPlugin):
-	def query(self):
-		"""	pygimp_install_procedure(PyObject *self, PyObject *args) {
-				[...]
-				PyObject *pars, *rets;
-				
-				if (!PyArg_ParseTuple(args, "sssssszziOO:install_procedure",
-					&name, &blurb, &help,
-					&author, &copyright, &date, &menu_path, &image_types,
-					&type, &pars, &rets))
-		"""
-		
-		copyright = re.subn(
-			"('.*?' )|( \(.*?\))",
-			"",
-			" & ".join(__author__)
-		)[0]
-		
-		gimp.install_procedure (
-			'plug_in_colorname',	# name
-			__blurb__,				# blurb
-			__doc__,				# help
-			", ".join(__author__),	# author
-			copyright,				# copyright
-			__date__,				# date
-			location,				# menu_path
-			'',						# image_types
-			gimpfu.PLUGIN,			# type
-			((gimpfu.PF_INT, 'run_mode', "interactive"),),	# pars
-			()						# rets
-		)
-
-	def plug_in_colorname(self, *args):
-		init()
-
 ##
 
 def init():
@@ -629,9 +555,4 @@ def init():
 	
 
 if __name__ == '__main__':
-	if gimp:
-		wrapper = GimpWrapper()
-		Colorname().start()
-	else:
-		wrapper = StandaloneWrapper()
-		init()
+	init()
