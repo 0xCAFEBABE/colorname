@@ -9,10 +9,10 @@ __blurb__ = "colorname tries to assign a name to a " \
 __doc__ = __blurb__ + "\n" \
 		"For this it calculates the euclidean distance of the currently " \
 		"selected color and all predefined colors, " \
-		"either in the RGB or HSV color space."
+		"either in the RGB, HSV, HSL or YIQ color space."
 
-__version__ = "0.2rc2"
-__date__ = "8th August 2007"
+__version__ = "0.3"
+__date__ = "19th July 2009"
 __website__ = "http://code.foosel.org/colorname"
 
 __author__ = (
@@ -62,8 +62,6 @@ colorDefPattern = "colorname-*.txt"
 colorDefDir = "colorname-colors"
 windowSize = (350, 600)
 
-
-
 class ColorVector(tuple):
 	def __sub__(self, v):
 		return (self[0] - v[0], self[1] - v[1], self[2] - v[2])
@@ -93,7 +91,6 @@ def distance(a, b):
 	"""
 
 	return reduce(hypot, a-b)
-
 
 ## GUI code
 
@@ -127,36 +124,6 @@ class GUI:
 	def destroy(self, widget, data=None):
 		gtk.main_quit()
 
-	def __addFiles(self, widget):
-		"""colorlist adding dialog0"""
-		
-		buttons = (
-			gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-			gtk.STOCK_OK, gtk.RESPONSE_ACCEPT
-		)
-		dialog = gtk.FileChooserDialog(buttons=buttons)
-		dialog.set_action(gtk.FILE_CHOOSER_ACTION_OPEN)
-		dialog.set_select_multiple(True)
-	
-		filterColor = gtk.FileFilter()
-		filterColor.set_name("color definitions")
-		filterColor.add_pattern("*.txt")
-		dialog.add_filter(filterColor)
-	
-		filterAll = gtk.FileFilter()
-		filterAll.set_name("everything")
-		filterAll.add_pattern("*")
-		dialog.add_filter(filterAll)
-	
-		response = dialog.run()
-		
-		if response == gtk.RESPONSE_ACCEPT:
-			files = dialog.get_filenames()
-			if files:
-				loadColors(self.colorModel, files)
-
-		dialog.destroy()
-			
 	def __showAbout(self, widget):
 		dialog = gtk.AboutDialog()
 		
@@ -172,46 +139,16 @@ class GUI:
 		dialog.run()
 		dialog.destroy()
 		
-	def __comboboxChangedHandler(self, widget):
+	def __comboboxChangedHandler(self, combobox):
 		"""RGB/HSV combobox handler"""
 		
-		## FIXME: might work or not depending on the libgtk version
-		# FIXME
-		num = widget.get_active()
-		print "XXX", num, "|", widget.get_model()
-		#self.__activeColorSystem = widget.get_model()[num][0]
-		
-		
-		## workaround
-		#if self.__activeColorSystem == self.__colorSystems[0]:
-		#	self.__activeColorSystem = self.__colorSystems[1]
-		#else:
-		#	self.__activeColorSystem = self.__colorSystems[0]	
+		self.__activeColorSystem = combobox.get_active_text()
 		
 	def __colorlistCheckboxHandler(self, cell, path, model):
 		model[path][0] = not model[path][0]
 
-	def __resultsDoubleclickHandler(self, treeview, path, view_column):
-		treeview.grab_focus()
-		treeview.set_cursor(path, view_column, 0)
-		
-		selection = treeview.get_selection()
-		if selection:
-			(model, iter) = selection.get_selected()
-			colorVal = model.get_value(iter, 3)
-			self.__setColorValHandler(None, colorVal)
-		
-	def __setColorValHandler(self, widget, colorVal):
-		(r, g, b) = parseRgbFromHex("%08x" % colorVal)
-		wrapper.setColor(r, g, b)
-		
 	def __copyColorValHandler(self, widget, colorVal):
 		gtk.Clipboard().set_text(("%08X" % colorVal)[:-2])
-
-	def __colorsPopup(self, treeview, event):
-		if event.button == 3:
-			self.colorMenu.popup(None, None, None, event.button, event.time)
-			return 1
 
 	def __resultsPopup(self, treeview, event):
 		if event.button == 3:
@@ -236,12 +173,6 @@ class GUI:
 					item.show()
 					menu.append(item)
 					
-					if gimp:
-						item = gtk.MenuItem("Set as foreground color")
-						item.connect("activate", self.__setColorValHandler, colorVal)
-						item.show()
-						menu.append(item)
-					
 					item = gtk.MenuItem("Copy RGB value to clipboard")
 					item.connect("activate", self.__copyColorValHandler, colorVal)
 					item.show()
@@ -251,10 +182,10 @@ class GUI:
 			return 1
 				
 	def __renderColorPixbuf(self, column, cell, model, iter):
-		# black border
 		pixbufSize = 16
-		pixbufInnerSize = pixbufSize -2
+		pixbufInnerSize = pixbufSize - 2
 		
+		# black border
 		pixBuf = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, False, 8, pixbufSize, pixbufSize)
 		pixBuf.fill(0xFF)
 		
@@ -267,15 +198,11 @@ class GUI:
 		color = self.colorSelect.get_current_color()
 		return ColorVector((color.red / 256, color.green / 256, color.blue / 256))
 	
-	def setColor(self, r, g, b):
-		colorDef = "#%02x%02x%02x" % (r, g, b)
-		self.colorSelect.set_current_color(gtk.gdk.color_parse(colorDef))
-
 	##
 
 	def __init__(self):
 		# color systems
-		self.__colorSystems = ["RGB", "HSV", "YIQ"]
+		self.__colorSystems = ["RGB", "HSV", "HSL", "YIQ"]
 		self.__activeColorSystem = self.__colorSystems[0]
 		
 		## main window
@@ -287,10 +214,12 @@ class GUI:
 		self.window.set_default_size(*windowSize)
 		
 		self.window.set_title("colorname")
-
 		self.window.connect("delete_event", self.delete_event)
 		self.window.connect("destroy", self.destroy)
 		self.window.set_border_width(1)
+		
+		pixbuf = self.window.render_icon(gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_DIALOG)
+		self.window.set_icon(pixbuf)
 		
 		## main boxes
 		
@@ -329,14 +258,6 @@ class GUI:
 			gtk.TreeViewColumn("Colorlist", gtk.CellRendererText(), text=1)
 		)
 		
-		self.colorMenu = gtk.Menu()
-		addItem = gtk.MenuItem("Add")
-		addItem.connect("activate", self.__addFiles)
-		addItem.show()
-		self.colorMenu.append(addItem)
-		
-		colorView.connect("button_press_event", self.__colorsPopup)
-
 		# create scrollbars around the view.
 		colorScrolledListView = gtk.ScrolledWindow()
 		colorScrolledListView.set_property("hscrollbar_policy", gtk.POLICY_NEVER)
@@ -380,7 +301,6 @@ class GUI:
 		self.__resultView.append_column(distCol)
 		
 		self.__resultView.connect("button_press_event", self.__resultsPopup)
-		self.__resultView.connect("row-activated", self.__resultsDoubleclickHandler)
 		
 		# create scrollbars around the view.
 		resultScrolledListView = gtk.ScrolledWindow()
@@ -402,7 +322,7 @@ class GUI:
 		selCombobox.set_active(0)
 		buttonBox.pack_start(selCombobox, fill=False, expand=False)
 		
-		selCombobox.connect_object("changed", self.__comboboxChangedHandler, selCombobox)
+		selCombobox.connect("changed", self.__comboboxChangedHandler)
 		
 		closeButton = gtk.Button(stock=gtk.STOCK_CLOSE)
 		closeButton.connect_object("clicked", gtk.Widget.destroy, self.window)
@@ -455,24 +375,45 @@ def parseColors(colors):
 		
 	return colorHash
 
+def translateColor(color, colorSystem):
+	""" Translates the given color in RGB to given color system.
+		@param color the color to translate
+		@param colorSystem the color system to translate to
+		@return the translated color tuple
+	"""
+	
+	if colorSystem == "HSV":
+		return rgbToHsv(color)
+	elif colorSystem == "YIQ":
+		return rgbToYiq(color)
+	elif colorSystem == "HSL":
+		return rgbToHls(color)
+	else:
+		return color
+
 def calcColorDistances(color, colorDict, colorSystem):
+	""" Calculates the distances of the given color to a dictionary of color definitions in the
+		given color system.
+		@param color color for which to calculate the distance
+		@param colorDict dictionary of name/color pairs against to which calculate the distance
+		@param colorSystem color system in which to calculate the distance
+		@return a result list containing 3-tuples of distance, name and RGB definition of tested colors
+	"""
+	
 	colornames = dict()
 	distances = []
 	
-	if colorSystem == "HSV":
-		color = rgbToHsv(color)
+	color = translateColor(color, colorSystem)
 	
 	for (n, c) in colorDict.iteritems():
-		if colorSystem == "HSV":
-			listVal = rgbToHsv(c)
-		else:
-			listVal = c
-		
+		listVal = translateColor(c, colorSystem)
 		distances.append([distance(color, listVal), n, c])
 		
 	return distances
 
 def rgbToHsv(color):
+	""" Converts the given RGB color to HSV color system. """
+	
 	r = color[0] / 255.0
 	g = color[1] / 255.0
 	b = color[2] / 255.0
@@ -480,7 +421,33 @@ def rgbToHsv(color):
 	(h, s, v) = colorsys.rgb_to_hsv(r, g, b)
 	return ColorVector((h * 255, s * 255, v * 255))
 
+def rgbToYiq(color):
+	""" Converts the given RGB color to YIQ color system. """
+	
+	r = color[0] / 255.0
+	g = color[1] / 255.0
+	b = color[2] / 255.0
+	
+	(y, i, q) = colorsys.rgb_to_yiq(r, g, b)
+	return ColorVector((y * 255, i * 255, q * 255))
+
+def rgbToHls(color):
+	""" Converts the given RGB color to HLS color system. """
+	
+	r = color[0] / 255.0
+	g = color[1] / 255.0
+	b = color[2] / 255.0
+	
+	(h, l, s) = colorsys.rgb_to_hls(r, g, b)
+	return ColorVector((h * 255, l * 255, s * 255))
+
 def loadColors(model, files=None, loadDefault=False):
+	""" Loads color definitions from the given list of files and appends them to the given model.
+		@param model model to append loaded color definitions to
+		@param file list of files from which to load color definitions
+		@param loadDefault set to True if builtin colors are to be loaded
+		@return False if no files were read in 
+	"""
 	if loadDefault:
 		builtin = list(builtinColors)
 		
