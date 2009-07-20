@@ -1,15 +1,7 @@
  Installation Instructions
 ===========================
 
-=== Standalone ===
-
 Simply execute "sudo ./setup.py install"
-
-=== GIMP Plugin ===
-
-To install the plugin simply copy colorname.py and the colorname-colors
-directory into your gimp plugin directory, e.g. "~/.gimp-2.2/plug-ins"
-on a UNIX-like machine with gimp 2.2
 
  Dependencies
 ==============
@@ -18,7 +10,5 @@ colorname has been tested with:
 
   - Python >= 2.4
   - PyGTK >= 2.10
-  - The Gimp >= 2.2.0 (optional)
-    - gimp-python
   - GNOME >= 2.18 (optional)
     - python-gnome

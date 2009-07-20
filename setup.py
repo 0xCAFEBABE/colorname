@@ -25,13 +25,13 @@ setup(
 	description=colorname.__blurb__,
 	license=colorname.__licenseName__,
 	
-    classifiers=[
-        "Programming Language :: Python",
-         "Development Status :: 4 - Beta",
-		 "License :: OSI Approved :: GNU General Public License (GPL)",
-		 "Operating System :: OS Independent",
-		 "Topic :: Utilities"
-    ],
-    scripts=['colorname.py'],
+	classifiers=[
+		"Programming Language :: Python",
+		"Development Status :: 5 - Production/Stable",
+		"License :: OSI Approved :: GNU General Public License (GPL)",
+		"Operating System :: OS Independent",
+		"Topic :: Utilities"
+	],
+	scripts=['colorname.py'],
 	data_files=[(colorname.colorDefDir, glob(os.path.join(colorname.colorDefDir, colorname.colorDefPattern)))]
 )

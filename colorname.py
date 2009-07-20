@@ -9,7 +9,7 @@ __blurb__ = "colorname tries to assign a name to a " \
 __doc__ = __blurb__ + "\n" \
 		"For this it calculates the euclidean distance of the currently " \
 		"selected color and all predefined colors, " \
-		"either in the RGB, HSV, HSL or YIQ color space."
+		"either in the RGB, HSV or YIQ color space."
 
 __version__ = "0.3"
 __date__ = "19th July 2009"
@@ -202,7 +202,7 @@ class GUI:
 
 	def __init__(self):
 		# color systems
-		self.__colorSystems = ["RGB", "HSV", "HSL", "YIQ"]
+		self.__colorSystems = ["YIQ", "RGB", "HSV"]
 		self.__activeColorSystem = self.__colorSystems[0]
 		
 		## main window
@@ -386,8 +386,6 @@ def translateColor(color, colorSystem):
 		return rgbToHsv(color)
 	elif colorSystem == "YIQ":
 		return rgbToYiq(color)
-	elif colorSystem == "HSL":
-		return rgbToHls(color)
 	else:
 		return color
 
