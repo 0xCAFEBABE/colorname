@@ -11,8 +11,8 @@ __doc__ = __blurb__ + "\n" \
 		"selected color and all predefined colors, " \
 		"either in the RGB, HSV or YIQ color space."
 
-__version__ = "0.3"
-__date__ = "19th July 2009"
+__version__ = "0.4"
+__date__ = "1st August 2009"
 __website__ = "http://code.foosel.org/colorname"
 
 __author__ = (
@@ -72,6 +72,7 @@ builtinColors = (False, "Builtin colors",
 	 	'Blue':			ColorVector([0x00, 0x00, 0xFF]),
 	 	'Green':		ColorVector([0x00, 0xFF, 0x00]),
 	 	'Cyan':			ColorVector([0x00, 0xFF, 0xFF]),
+	 	'Ubuntu Brown':	ColorVector((0xBC, 0x79, 0x4F)),
 	 	'Debian Red':	ColorVector((0xD7, 0x07, 0x51)),
 	 	'Red':			ColorVector([0xFF, 0x00, 0x00]),
 		'Magenta':		ColorVector([0xFF, 0x00, 0xFF]),
@@ -148,7 +149,7 @@ class GUI:
 		model[path][0] = not model[path][0]
 
 	def __copyColorValHandler(self, widget, colorVal):
-		gtk.Clipboard().set_text(("%08X" % colorVal)[:-2])
+		gtk.Clipboard().set_text(("#%08X" % colorVal)[:-2])
 
 	def __resultsPopup(self, treeview, event):
 		if event.button == 3:
@@ -488,15 +489,9 @@ def init():
 	## load external color definitions
 	pkgdirRe = re.compile("packages$")
 	
-	# color directories
 	colorLocations = []
-	colorLocations.append(os.path.dirname(sys.argv[0]))
-	colorLocations.extend(filter(pkgdirRe.search, sys.path))
-	
-	tmp = []
-	for e in colorLocations:
-		tmp.append(os.path.join(e, colorDefDir))
-	colorLocations = tmp
+	for e in filter(pkgdirRe.search, sys.path):
+		colorLocations.append(os.path.join(e, colorDefDir))
 	
 	# files
 	files = []
