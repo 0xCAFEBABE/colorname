@@ -10,9 +10,6 @@ from distutils.command.install import INSTALL_SCHEMES
 import colorname
 
 if os.name == "posix":
-	if sys.prefix == "/usr":
-		sys.prefix = "/usr/local/"
-
 	for scheme in INSTALL_SCHEMES.values():
 		scheme['data'] = scheme['purelib'] 
 

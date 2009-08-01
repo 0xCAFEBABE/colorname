@@ -486,7 +486,7 @@ def init():
 	g = GUI()
 	
 	## load external color definitions
-	pkgdirRe = re.compile("site-packages$")
+	pkgdirRe = re.compile("packages$")
 	
 	# color directories
 	colorLocations = []
