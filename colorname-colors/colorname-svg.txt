@@ -1,7 +1,7 @@
 [options]
 name = Websafe colors
 author = W3C
-license = GPL
+license = W3C DOCUMENT LICENSE
 source = http://www.w3.org/TR/css3-color/#svg-color
 copyright = Copyright (c) [2003] World Wide Web Consortium, (Massachusetts Institute of Technology, European Research Consortium for Informatics and Mathematics, Keio University). All Rights Reserved. http://www.w3.org/Consortium/Legal/2002/copyright-documents-20021231
 active = 0
